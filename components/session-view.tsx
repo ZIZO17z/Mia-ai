@@ -36,16 +36,44 @@ export const SessionView = ({
 }: React.ComponentProps<'div'> & SessionViewProps) => {
   const { state: agentState } = useVoiceAssistant();
   const [chatOpen, setChatOpen] = useState(false);
+  const [mounted, setMounted] = useState(false);
   const { messages, send } = useChatAndTranscription();
+
+  // Debug logging for messages
+  useEffect(() => {
+    console.log('Chat messages updated:', messages.length, messages);
+  }, [messages]);
+
+  // Prevent hydration issues
+  useEffect(() => {
+    setMounted(true);
+  }, []);
   const room = useRoomContext();
 
   useDebugMode({
-    enabled: process.env.NODE_END !== 'production',
+    enabled: process.env.NODE_ENV !== 'production',
   });
 
   async function handleSendMessage(message: string) {
-    await send(message);
+    try {
+      console.log('Sending chat message:', message);
+      await send(message);
+      console.log('Chat message sent successfully');
+    } catch (error) {
+      console.error('Failed to send chat message:', error);
+      toastAlert({
+        title: 'Failed to send message',
+        description: 'There was an error sending your chat message. Please try again.',
+      });
+    }
   }
+
+  // Auto-open chat when session starts
+  useEffect(() => {
+    if (sessionStarted && appConfig.supportsChatInput) {
+      setChatOpen(true);
+    }
+  }, [sessionStarted, appConfig.supportsChatInput]);
 
   useEffect(() => {
     if (sessionStarted) {
@@ -93,7 +121,6 @@ export const SessionView = ({
       ref={ref}
       inert={disabled}
       className={cn(
-        'opacity-0',
         // prevent page scrollbar
         // when !chatOpen due to 'translate-y-20'
         !chatOpen && 'max-h-svh overflow-hidden'
@@ -106,19 +133,25 @@ export const SessionView = ({
         )}
       >
         <div className="space-y-3 whitespace-pre-wrap">
-          <AnimatePresence>
-            {messages.map((message: ReceivedChatMessage) => (
-              <motion.div
-                key={message.id}
-                initial={{ opacity: 0, height: 0 }}
-                animate={{ opacity: 1, height: 'auto' }}
-                exit={{ opacity: 1, height: 'auto', translateY: 0.001 }}
-                transition={{ duration: 0.5, ease: 'easeOut' }}
-              >
-                <ChatEntry hideName key={message.id} entry={message} />
-              </motion.div>
-            ))}
-          </AnimatePresence>
+          {mounted ? (
+            <AnimatePresence>
+              {messages.map((message: ReceivedChatMessage) => (
+                <motion.div
+                  key={message.id}
+                  initial={{ opacity: 0, height: 0 }}
+                  animate={{ opacity: 1, height: 'auto' }}
+                  exit={{ opacity: 1, height: 'auto', translateY: 0.001 }}
+                  transition={{ duration: 0.5, ease: 'easeOut' }}
+                >
+                  <ChatEntry hideName key={message.id} entry={message} />
+                </motion.div>
+              ))}
+            </AnimatePresence>
+          ) : (
+            messages.map((message: ReceivedChatMessage) => (
+              <ChatEntry hideName key={message.id} entry={message} />
+            ))
+          )}
         </div>
       </ChatMessageView>
 

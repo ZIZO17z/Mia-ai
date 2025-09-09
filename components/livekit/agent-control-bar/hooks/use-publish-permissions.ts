@@ -25,7 +25,14 @@ export interface PublishPermissions {
 export function usePublishPermissions(): PublishPermissions {
   const localPermissions = useLocalParticipantPermissions();
 
+  console.log('Permissions debug - localPermissions:', localPermissions);
+
   const canPublishSource = (source: Track.Source) => {
+    // If no permissions are set, allow all sources (fallback for development/testing)
+    if (!localPermissions) {
+      return true;
+    }
+    
     return (
       !!localPermissions?.canPublish &&
       (localPermissions.canPublishSources.length === 0 ||
@@ -33,10 +40,13 @@ export function usePublishPermissions(): PublishPermissions {
     );
   };
 
-  return {
+  const permissions = {
     camera: canPublishSource(Track.Source.Camera),
     microphone: canPublishSource(Track.Source.Microphone),
     screenShare: canPublishSource(Track.Source.ScreenShare),
-    data: localPermissions?.canPublishData ?? false,
+    data: localPermissions?.canPublishData ?? true, // Default to true for chat functionality
   };
+
+  console.log('Permissions debug - calculated permissions:', permissions);
+  return permissions;
 }

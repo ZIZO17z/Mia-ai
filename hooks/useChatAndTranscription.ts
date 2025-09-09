@@ -13,6 +13,10 @@ export default function useChatAndTranscription() {
   const chat = useChat();
   const room = useRoomContext();
 
+  // Debug logging
+  console.log('Chat hook - transcriptions:', transcriptions.length);
+  console.log('Chat hook - chat messages:', chat.chatMessages.length);
+
   const mergedTranscriptions = useMemo(() => {
     const merged: Array<ReceivedChatMessage> = [
       ...transcriptions.map((transcription) => transcriptionToChatMessage(transcription, room)),

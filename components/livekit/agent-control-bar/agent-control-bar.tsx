@@ -38,6 +38,13 @@ export function AgentControlBar({
   onDeviceError,
   ...props
 }: AgentControlBarProps) {
+  // Add fallback capabilities if not provided
+  const safeCapabilities = {
+    supportsChatInput: true,
+    supportsVideoInput: true,
+    supportsScreenShare: true,
+    ...capabilities,
+  };
   const participants = useRemoteParticipants();
   const [chatOpen, setChatOpen] = React.useState(false);
   const [isSendingMessage, setIsSendingMessage] = React.useState(false);
@@ -46,6 +53,16 @@ export function AgentControlBar({
   const isInputDisabled = !chatOpen || !isAgentAvailable || isSendingMessage;
 
   const [isDisconnecting, setIsDisconnecting] = React.useState(false);
+
+  // Ensure default controls are set
+  const defaultControls = {
+    microphone: true,
+    camera: safeCapabilities.supportsVideoInput,
+    screenShare: safeCapabilities.supportsScreenShare,
+    chat: safeCapabilities.supportsChatInput,
+    leave: true,
+    ...controls,
+  };
 
   const {
     micTrackRef,
@@ -57,7 +74,7 @@ export function AgentControlBar({
     handleVideoDeviceChange,
     handleDisconnect,
   } = useAgentControlBar({
-    controls,
+    controls: defaultControls,
     saveUserChoices,
   });
 
@@ -78,8 +95,12 @@ export function AgentControlBar({
   };
 
   React.useEffect(() => {
+    console.log('Chat open state changed:', chatOpen);
+    console.log('Agent available:', isAgentAvailable);
+    console.log('Chat input supported:', safeCapabilities.supportsChatInput);
+    console.log('Visible controls:', visibleControls);
     onChatOpenChange?.(chatOpen);
-  }, [chatOpen, onChatOpenChange]);
+  }, [chatOpen, onChatOpenChange, isAgentAvailable, safeCapabilities.supportsChatInput, visibleControls]);
 
   const onMicrophoneDeviceSelectError = useCallback(
     (error: Error) => {
@@ -103,7 +124,7 @@ export function AgentControlBar({
       )}
       {...props}
     >
-      {capabilities.supportsChatInput && (
+      {safeCapabilities.supportsChatInput && (
         <div
           inert={!chatOpen}
           className={cn(
@@ -163,7 +184,7 @@ export function AgentControlBar({
             </div>
           )}
 
-          {capabilities.supportsVideoInput && visibleControls.camera && (
+          {safeCapabilities.supportsVideoInput && visibleControls.camera && (
             <div className="flex items-center gap-0">
               <TrackToggle
                 variant="primary"
@@ -192,7 +213,7 @@ export function AgentControlBar({
             </div>
           )}
 
-          {capabilities.supportsScreenShare && visibleControls.screenShare && (
+          {safeCapabilities.supportsScreenShare && visibleControls.screenShare && (
             <div className="flex items-center gap-0">
               <TrackToggle
                 variant="secondary"

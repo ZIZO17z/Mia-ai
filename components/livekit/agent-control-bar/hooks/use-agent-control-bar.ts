@@ -65,10 +65,19 @@ export function useAgentControlBar(props: UseAgentControlBarProps = {}): UseAgen
     };
   }, [localParticipant, microphoneTrack]);
 
-  visibleControls.microphone ??= publishPermissions.microphone;
+  // Set permissions with fallbacks for essential controls
+  visibleControls.microphone ??= publishPermissions.microphone || true; // Always show microphone
   visibleControls.screenShare ??= publishPermissions.screenShare;
   visibleControls.camera ??= publishPermissions.camera;
-  visibleControls.chat ??= publishPermissions.data;
+  visibleControls.chat ??= publishPermissions.data || true; // Always show chat if not explicitly set
+
+  // Ensure leave button is always visible
+  visibleControls.leave = true;
+
+  // Debug logging
+  console.log('Control bar debug - publishPermissions:', publishPermissions);
+  console.log('Control bar debug - visibleControls:', visibleControls);
+  console.log('Control bar debug - localParticipant:', localParticipant?.identity);
 
   const {
     saveAudioInputEnabled,
