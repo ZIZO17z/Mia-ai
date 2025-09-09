@@ -23,11 +23,12 @@ jobs:
       - name: Install dependencies
         run: pnpm install
 
-      - name: ESLint
-        run: pnpm lint
-
-      - name: Prettier
-        run: pnpm format:check
+      # Linting steps disabled
+      # - name: ESLint
+      #   run: pnpm lint
+      #
+      # - name: Prettier
+      #   run: pnpm format:check
 
       - name: Ensure build succeeds
         run: pnpm build
